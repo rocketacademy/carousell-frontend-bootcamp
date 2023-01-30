@@ -1,10 +1,10 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
-
 import { BACKEND_URL } from "../constants";
+import { useAuth0, User } from "@auth0/auth0-react";
 
 const NewListingForm = () => {
   const [title, setTitle] = useState("");
@@ -14,6 +14,15 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
+  const { isAuthenticated, getAccessTokenSilently, loginWithRedirect } =
+    useAuth0();
+
+  // when authenticated then redirect
+  useEffect(() => {
+    if (isAuthenticated) {
+      loginWithRedirect();
+    }
+  });
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -39,32 +48,47 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  // async to work asynchronously instead of .then
+  const handleSubmit = async (event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
 
+    // retrieve access token
+    const accessToken = await getAccessTokenSilently({
+      audience: "https://carousell/api",
+      scope: "read:current_user",
+    });
+
     // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
+    const response = await axios.post(
+      `${BACKEND_URL}/listings`,
+      {
         title,
         category,
         condition,
         price,
         description,
         shippingDetails,
-      })
-      .then((res) => {
-        // Clear form state
-        setTitle("");
-        setCategory("");
-        setCondition("");
-        setPrice(0);
-        setDescription("");
-        setShippingDetails("");
+        //send that email as the seller's email to our backend in handleSubmit with the other listing data
+        sellerEmail: User.email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
-        // Navigate to listing-specific page after submitting form
-        navigate(`/listings/${res.data.id}`);
-      });
+    // Clear form state
+    setTitle("");
+    setCategory("");
+    setCondition("");
+    setPrice(0);
+    setDescription("");
+    setShippingDetails("");
+
+    // Navigate to listing-specific page after submitting form
+    navigate(`/listings/${response.data.id}`);
   };
 
   return (
