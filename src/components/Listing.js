@@ -5,10 +5,16 @@ import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 
 import { BACKEND_URL } from "../constants.js";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+
+  const { user, isAuthenticated, getAccessTokenSilently, loginWithRedirect } =
+    useAuth0();
+
+  const [accessToken, setAccessToken] = useState("");
 
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
@@ -31,15 +37,28 @@ const Listing = () => {
   if (listing) {
     for (const key in listing) {
       listingDetails.push(
-        <Card.Text key={key}>{`${key}: ${listing[key]}`}</Card.Text>
+        <Card.Text key={key}>{`${key}: ${listing[key]}`}</Card.Text>,
       );
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
-    });
+  const handleClick = async () => {
+    if (isAuthenticated) {
+      let token = await getAccessTokenSilently({
+        audience: process.env.REACT_APP_AUDIENCE,
+        scope: "read:current_user",
+      });
+      setAccessToken(token);
+    } else {
+      loginWithRedirect();
+    }
+
+    const res = await axios.put(
+      `${BACKEND_URL}/listings/${listingId}/buy`,
+      { buyerEmail: user.email },
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    setListing(res.data);
   };
 
   return (
