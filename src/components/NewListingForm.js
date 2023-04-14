@@ -1,8 +1,9 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants";
 
@@ -13,7 +14,27 @@ const NewListingForm = () => {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
+  const [accessToken, setAccessToken] = useState("");
   const navigate = useNavigate();
+
+  const { isAuthenticated, loginWithRedirect, getAccessTokenSilently, user } =
+    useAuth0();
+
+  const checkUser = async () => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    } else {
+      let token = await getAccessTokenSilently({
+        audience: "https://carousell/api",
+        scope: "openid profile email phone",
+      });
+      console.log(token);
+      setAccessToken(token);
+    }
+  };
+  useEffect(() => {
+    checkUser();
+  });
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -39,20 +60,29 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
 
     // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
-        title,
-        category,
-        condition,
-        price,
-        description,
-        shippingDetails,
-      })
+    const response = await axios
+      .post(
+        `${BACKEND_URL}/listings`,
+        {
+          title,
+          category,
+          condition,
+          price,
+          description,
+          shippingDetails,
+          sellerEmail: user.email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
       .then((res) => {
         // Clear form state
         setTitle("");
@@ -67,73 +97,77 @@ const NewListingForm = () => {
       });
   };
 
+  console.log("user", user);
   return (
-    <Form onSubmit={handleSubmit}>
-      <Form.Group>
-        <Form.Label>Title</Form.Label>
-        <Form.Control
-          type="text"
-          name="title"
-          value={title}
-          onChange={handleChange}
-          placeholder="iPhone 13, like new!"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Category</Form.Label>
-        <Form.Control
-          type="text"
-          name="category"
-          value={category}
-          onChange={handleChange}
-          placeholder="Electronics"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Condition</Form.Label>
-        <Form.Control
-          type="text"
-          name="condition"
-          value={condition}
-          onChange={handleChange}
-          placeholder="Like New"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Price ($)</Form.Label>
-        <Form.Control
-          type="text"
-          name="price"
-          value={price}
-          onChange={handleChange}
-          placeholder="999"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Description</Form.Label>
-        <Form.Control
-          as="textarea"
-          name="description"
-          value={description}
-          onChange={handleChange}
-          placeholder="Bought 2 months ago, selling because switching to Android."
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Shipping Details</Form.Label>
-        <Form.Control
-          as="textarea"
-          name="shippingDetails"
-          value={shippingDetails}
-          onChange={handleChange}
-          placeholder="Same day shipping, we can message to coordinate!"
-        />
-      </Form.Group>
+    <div>
+      <Form onSubmit={handleSubmit}>
+        <Form.Group>
+          <Form.Label>Title</Form.Label>
+          <Form.Control
+            type="text"
+            name="title"
+            value={title}
+            onChange={handleChange}
+            placeholder="iPhone 13, like new!"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Category</Form.Label>
+          <Form.Control
+            type="text"
+            name="category"
+            value={category}
+            onChange={handleChange}
+            placeholder="Electronics"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Condition</Form.Label>
+          <Form.Control
+            type="text"
+            name="condition"
+            value={condition}
+            onChange={handleChange}
+            placeholder="Like New"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Price ($)</Form.Label>
+          <Form.Control
+            type="text"
+            name="price"
+            value={price}
+            onChange={handleChange}
+            placeholder="999"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            name="description"
+            value={description}
+            onChange={handleChange}
+            placeholder="Bought 2 months ago, selling because switching to Android."
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Shipping Details</Form.Label>
+          <Form.Control
+            as="textarea"
+            name="shippingDetails"
+            value={shippingDetails}
+            onChange={handleChange}
+            placeholder="Same day shipping, we can message to coordinate!"
+          />
+        </Form.Group>
 
-      <Button variant="primary" type="submit">
-        List this item
-      </Button>
-    </Form>
+        <Button variant="primary" type="submit">
+          List this item
+        </Button>
+      </Form>
+      <div>{isAuthenticated && <div>{user.email}</div>}</div>
+    </div>
   );
 };
 
