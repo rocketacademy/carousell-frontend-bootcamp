@@ -6,9 +6,15 @@ import Card from "react-bootstrap/Card";
 
 import { BACKEND_URL } from "../constants.js";
 
+import { useAuth0 } from "@auth0/auth0-react";
+
 const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+  const [accessToken, setAccessToken] = useState("");
+
+  const { loginWithRedirect, user, isAuthenticated, getAccessTokenSilently } =
+    useAuth0();
 
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
@@ -36,10 +42,34 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
-    });
+  const checkUser = async () => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    } else {
+      let token = await getAccessTokenSilently({
+        audience: "https://carousell/api",
+        scope: "read:current_user openid profile email phone",
+      });
+      setAccessToken(token);
+    }
+  };
+
+  const handleClick = async () => {
+    checkUser();
+
+    axios
+      .put(
+        `${BACKEND_URL}/listings/${listingId}`,
+        { buyerEmail: user.email },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
+      .then((response) => {
+        setListing(response.data);
+      });
   };
 
   return (
@@ -48,8 +78,8 @@ const Listing = () => {
       <Card bg="dark">
         <Card.Body>
           {listingDetails}
-          <Button onClick={handleClick} disabled={listing.BuyerId}>
-            Buy
+          <Button onClick={handleClick} disabled={listing.buyerId}>
+            {listing.buyerId ? "SOLD" : "Buy"}
           </Button>
         </Card.Body>
       </Card>
