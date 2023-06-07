@@ -5,8 +5,11 @@ import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 
 import { BACKEND_URL } from "../constants.js";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const Listing = () => {
+  const { user, isAuthenticated, loginWithRedirect, getAccessTokenSilently } =
+    useAuth0();
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
 
@@ -36,10 +39,32 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
-    });
+  const handleClick = async () => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    } else {
+      try {
+        const token = await getAccessTokenSilently({
+          authorizationParams: {
+            audience: `https://test/api`,
+            scope: "read:current_user",
+          },
+        });
+        console.log(token);
+        const putRequest = await axios.put(
+          `${BACKEND_URL}/listings/${listingId}`,
+          { email: user.email },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log(putRequest);
+      } catch (err) {
+        console.log(err.message);
+      }
+    }
   };
 
   return (

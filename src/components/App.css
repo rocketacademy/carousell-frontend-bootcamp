@@ -17,3 +17,7 @@
   font-size: calc(10px + 2vmin);
   color: white;
 }
+
+a:visited {
+  color: rgb(123, 200, 255);
+}
