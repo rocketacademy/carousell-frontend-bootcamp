@@ -1,8 +1,9 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants";
 
@@ -13,7 +14,19 @@ const NewListingForm = () => {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
+  const [email, setEmail] = useState("");
   const navigate = useNavigate();
+
+  const { isAuthenticated, loginWithRedirect, user, getAccessTokenSilently } =
+    useAuth0();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    } else {
+      setEmail(user.email);
+    }
+  }, []);
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -39,20 +52,34 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
 
+    const accessToken = await getAccessTokenSilently({
+      audience: "https://carousell/api",
+      scope: "read:current_user",
+    });
+
     // Send request to create new listing in backend
     axios
-      .post(`${BACKEND_URL}/listings`, {
-        title,
-        category,
-        condition,
-        price,
-        description,
-        shippingDetails,
-      })
+      .post(
+        `${BACKEND_URL}/listings`,
+        {
+          title,
+          category,
+          condition,
+          price,
+          description,
+          shippingDetails,
+          email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
       .then((res) => {
         // Clear form state
         setTitle("");
@@ -69,6 +96,7 @@ const NewListingForm = () => {
 
   return (
     <Form onSubmit={handleSubmit}>
+      <div>Logged in as: {email}</div>
       <Form.Group>
         <Form.Label>Title</Form.Label>
         <Form.Control
