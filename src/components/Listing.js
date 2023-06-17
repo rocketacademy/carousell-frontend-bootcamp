@@ -3,12 +3,35 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants.js";
 
 const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+  const { isAuthenticated, getAccessTokenSilently, loginWithRedirect, user } =
+    useAuth0();
+
+  useEffect(() => {
+    const getToken = async () => {
+      const domain = process.env.REACT_APP_DOMAIN;
+      console.log("domain:", domain);
+      try {
+        const token = await getAccessTokenSilently({
+          authorizationParams: {
+            audience: process.env.REACT_APP_AUDIENCE,
+            scope: "read:current_user",
+          },
+        });
+        console.log("token:", token);
+        localStorage.setItem("accessToken", token);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    getToken();
+  }, [getAccessTokenSilently, isAuthenticated]);
 
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
@@ -36,14 +59,34 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
+  const handleClick = async () => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+      return;
+    }
+    const accessToken = await getAccessTokenSilently({
+      audience: "https://carousell/api/reuben",
+      scope: "read:current_user",
     });
+    const buyItems = await axios.put(
+      `${BACKEND_URL}/listings/${listingId}`,
+      {
+        buyerEmail: user.email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    setListing(buyItems.data);
   };
 
   return (
     <div>
+      {user && <div>Logged in as: {user.email}</div>}
+
       <Link to="/">Home</Link>
       <Card bg="dark">
         <Card.Body>
