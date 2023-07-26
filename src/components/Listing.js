@@ -5,10 +5,33 @@ import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 
 import { BACKEND_URL } from "../constants.js";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+  const [accessToken, setAccessToken] = useState("");
+
+  const { user, isAuthenticated, getAccessTokenSilently, loginWithRedirect } =
+    useAuth0();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      if (isAuthenticated) {
+        const token = await getAccessTokenSilently({
+          authorizationParams: {
+            audience: process.env.REACT_APP_AUDIENCE,
+            scope: "read:current_user",
+          },
+        });
+        setAccessToken(token);
+      } else {
+        loginWithRedirect();
+      }
+    };
+
+    checkUser();
+  }, []);
 
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
@@ -36,10 +59,23 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
-    });
+  const handleClick = async () => {
+    const { data } = await axios.put(
+      `${BACKEND_URL}/listings/${listingId}`,
+      {
+        buyerEmail: user.email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    console.log("put");
+
+    setListing(data);
+    console.log("set");
   };
 
   return (
