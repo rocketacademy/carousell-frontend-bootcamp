@@ -1,10 +1,11 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
 
 import { BACKEND_URL } from "../constants";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const NewListingForm = () => {
   const [title, setTitle] = useState("");
@@ -14,6 +15,28 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
+  const [accessToken, setAccessToken] = useState("");
+
+  const { user, isAuthenticated, getAccessTokenSilently, loginWithRedirect } =
+    useAuth0();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      if (isAuthenticated) {
+        const token = await getAccessTokenSilently({
+          authorizationParams: {
+            audience: process.env.REACT_APP_AUDIENCE,
+            scope: "read:current_user",
+          },
+        });
+        setAccessToken(token);
+      } else {
+        loginWithRedirect();
+      }
+    };
+
+    checkUser();
+  }, []);
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -39,32 +62,41 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
 
     // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
+    const { data } = await axios.post(
+      `${BACKEND_URL}/listings`,
+      {
         title,
         category,
         condition,
         price,
         description,
         shippingDetails,
-      })
-      .then((res) => {
-        // Clear form state
-        setTitle("");
-        setCategory("");
-        setCondition("");
-        setPrice(0);
-        setDescription("");
-        setShippingDetails("");
+        sellerEmail: user.email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
-        // Navigate to listing-specific page after submitting form
-        navigate(`/listings/${res.data.id}`);
-      });
+    console.log(data);
+
+    // Clear form state
+    setTitle("");
+    setCategory("");
+    setCondition("");
+    setPrice(0);
+    setDescription("");
+    setShippingDetails("");
+
+    // Navigate to listing-specific page after submitting form
+    navigate(`/listings/${data.id}`);
   };
 
   return (
@@ -77,6 +109,7 @@ const NewListingForm = () => {
           value={title}
           onChange={handleChange}
           placeholder="iPhone 13, like new!"
+          required
         />
       </Form.Group>
       <Form.Group>
@@ -87,6 +120,7 @@ const NewListingForm = () => {
           value={category}
           onChange={handleChange}
           placeholder="Electronics"
+          required
         />
       </Form.Group>
       <Form.Group>
@@ -97,16 +131,18 @@ const NewListingForm = () => {
           value={condition}
           onChange={handleChange}
           placeholder="Like New"
+          required
         />
       </Form.Group>
       <Form.Group>
         <Form.Label>Price ($)</Form.Label>
         <Form.Control
-          type="text"
+          type="number"
           name="price"
           value={price}
           onChange={handleChange}
           placeholder="999"
+          required
         />
       </Form.Group>
       <Form.Group>
@@ -117,6 +153,7 @@ const NewListingForm = () => {
           value={description}
           onChange={handleChange}
           placeholder="Bought 2 months ago, selling because switching to Android."
+          required
         />
       </Form.Group>
       <Form.Group>
@@ -127,6 +164,7 @@ const NewListingForm = () => {
           value={shippingDetails}
           onChange={handleChange}
           placeholder="Same day shipping, we can message to coordinate!"
+          required
         />
       </Form.Group>
 
