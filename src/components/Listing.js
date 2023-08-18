@@ -8,24 +8,6 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { BACKEND_URL } from "../constants.js";
 
 const Listing = () => {
-  // const { user, isAuthenticated, getAccessTokenSilently, loginWithRedirect } =
-  //   useAuth0();
-
-  // const [accessToken, setAccessToken] = useState("");
-
-  // const checkUser = async () => {
-  //   if (isAuthenticated) {
-  //     let token = await getAccessTokenSilently({
-  //       audience: "https://carousell/api",
-  //       scope: "read:current_user",
-  //     });
-  //     console.log(token);
-  //     setAccessToken(token);
-  //   } else {
-  //     loginWithRedirect();
-  //   }
-  // };
-
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
 
