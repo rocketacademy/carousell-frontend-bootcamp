@@ -1,12 +1,35 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants";
 
 const NewListingForm = () => {
+  const { user, isAuthenticated, getAccessTokenSilently, loginWithRedirect } =
+    useAuth0();
+
+  const [accessToken, setAccessToken] = useState("");
+
+  const checkUser = async () => {
+    if (isAuthenticated) {
+      let token = await getAccessTokenSilently({
+        audience: "https://carousell/api",
+        scope: "read:current_user",
+      });
+      console.log(token);
+      setAccessToken(token);
+    } else {
+      loginWithRedirect();
+    }
+  };
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
@@ -14,6 +37,15 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
+
+  // const { isAuthenticated, getAccessTokenSilently, loginWithRedirect, user } =
+  //   useAuth0();
+
+  // useEffect(() => {
+  //   if (!isAuthenticated) {
+  //     loginWithRedirect();
+  //   }
+  // });
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -39,20 +71,82 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  // async await stype
+  const handleSubmit2 = async (event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
 
+    // Retrieve access token
+    // const accessToken = await getAccessTokenSilently({
+    //   audience: "https://carousell/api",
+    //   scope: "read:current_user",
+    // });
+
     // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
+    const response = await axios.post(
+      `${BACKEND_URL}/listings`,
+      {
         title,
         category,
         condition,
         price,
         description,
         shippingDetails,
-      })
+        userEmail: "calebcc.castro@gmail.com", // user.email does not work
+        userFirstName: "caleb",
+        userLastName: "castro",
+        userPhoneNumber: "96717532",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    // Clear form state
+    setTitle("");
+    setCategory("");
+    setCondition("");
+    setPrice(0);
+    setDescription("");
+    setShippingDetails("");
+
+    // Navigate to listing-specific page after submitting form
+    navigate(`/listings/${response.data.id}`);
+  };
+  //     .catch((error) => {
+  //       console.error("An error occurred:", error);
+  //     });
+  // };
+
+  // promises style
+  const handleSubmit = (event) => {
+    // Prevent default form redirect on submission
+    event.preventDefault();
+
+    // Send request to create new listing in backend
+    axios
+      .post(
+        `${BACKEND_URL}/listings`,
+        {
+          title,
+          category,
+          condition,
+          price,
+          description,
+          shippingDetails,
+          userEmail: "calebcc.castro@gmail.com", // user.email does not work
+          userFirstName: "caleb",
+          userLastName: "castro",
+          userPhoneNumber: "96717532",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
       .then((res) => {
         // Clear form state
         setTitle("");

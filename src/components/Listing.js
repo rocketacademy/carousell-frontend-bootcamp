@@ -3,12 +3,34 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants.js";
 
 const Listing = () => {
+  // const { user, isAuthenticated, getAccessTokenSilently, loginWithRedirect } =
+  //   useAuth0();
+
+  // const [accessToken, setAccessToken] = useState("");
+
+  // const checkUser = async () => {
+  //   if (isAuthenticated) {
+  //     let token = await getAccessTokenSilently({
+  //       audience: "https://carousell/api",
+  //       scope: "read:current_user",
+  //     });
+  //     console.log(token);
+  //     setAccessToken(token);
+  //   } else {
+  //     loginWithRedirect();
+  //   }
+  // };
+
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+
+  const { isAuthenticated, getAccessTokenSilently, loginWithRedirect, user } =
+    useAuth0();
 
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
@@ -36,10 +58,42 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
+  const handleClick = async () => {
+    // checkUser();
+    // If user is not yet authenticated, authenticate before allowing them to buy
+    if (!isAuthenticated) {
+      loginWithRedirect();
+      return;
+    }
+
+    // Retrieve access token
+    const accessToken = await getAccessTokenSilently({
+      audience: "https://carousell/api",
+      scope: "read:current_user",
     });
+
+    // Mark the listing as bought
+    const response = await axios
+      .put(
+        `${BACKEND_URL}/listings/${listingId}`,
+        {
+          userEmail: "calebcc.castro@gmail.com",
+          userFirstName: "caleb",
+          userLastName: "castro",
+          userPhoneNumber: "96717532",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
+      .then((response) => {
+        setListing(response.data);
+      })
+      .catch((error) => {
+        console.error("An error occurred:", error);
+      });
   };
 
   return (
