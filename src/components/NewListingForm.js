@@ -38,15 +38,6 @@ const NewListingForm = () => {
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
 
-  // const { isAuthenticated, getAccessTokenSilently, loginWithRedirect, user } =
-  //   useAuth0();
-
-  // useEffect(() => {
-  //   if (!isAuthenticated) {
-  //     loginWithRedirect();
-  //   }
-  // });
-
   const handleChange = (event) => {
     switch (event.target.name) {
       case "title":
@@ -70,55 +61,6 @@ const NewListingForm = () => {
       default:
     }
   };
-
-  // async await stype
-  const handleSubmit2 = async (event) => {
-    // Prevent default form redirect on submission
-    event.preventDefault();
-
-    // Retrieve access token
-    // const accessToken = await getAccessTokenSilently({
-    //   audience: "https://carousell/api",
-    //   scope: "read:current_user",
-    // });
-
-    // Send request to create new listing in backend
-    const response = await axios.post(
-      `${BACKEND_URL}/listings`,
-      {
-        title,
-        category,
-        condition,
-        price,
-        description,
-        shippingDetails,
-        userEmail: "calebcc.castro@gmail.com", // user.email does not work
-        userFirstName: "caleb",
-        userLastName: "castro",
-        userPhoneNumber: "96717532",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    // Clear form state
-    setTitle("");
-    setCategory("");
-    setCondition("");
-    setPrice(0);
-    setDescription("");
-    setShippingDetails("");
-
-    // Navigate to listing-specific page after submitting form
-    navigate(`/listings/${response.data.id}`);
-  };
-  //     .catch((error) => {
-  //       console.error("An error occurred:", error);
-  //     });
-  // };
 
   // promises style
   const handleSubmit = (event) => {
