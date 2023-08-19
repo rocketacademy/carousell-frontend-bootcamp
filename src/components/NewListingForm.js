@@ -1,8 +1,9 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants";
 
@@ -14,6 +15,15 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
+
+  const { loginWithRedirect, isAuthenticated } = useAuth0();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+      console.log(isAuthenticated);
+    }
+  });
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -68,72 +78,74 @@ const NewListingForm = () => {
   };
 
   return (
-    <Form onSubmit={handleSubmit}>
-      <Form.Group>
-        <Form.Label>Title</Form.Label>
-        <Form.Control
-          type="text"
-          name="title"
-          value={title}
-          onChange={handleChange}
-          placeholder="iPhone 13, like new!"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Category</Form.Label>
-        <Form.Control
-          type="text"
-          name="category"
-          value={category}
-          onChange={handleChange}
-          placeholder="Electronics"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Condition</Form.Label>
-        <Form.Control
-          type="text"
-          name="condition"
-          value={condition}
-          onChange={handleChange}
-          placeholder="Like New"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Price ($)</Form.Label>
-        <Form.Control
-          type="text"
-          name="price"
-          value={price}
-          onChange={handleChange}
-          placeholder="999"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Description</Form.Label>
-        <Form.Control
-          as="textarea"
-          name="description"
-          value={description}
-          onChange={handleChange}
-          placeholder="Bought 2 months ago, selling because switching to Android."
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Shipping Details</Form.Label>
-        <Form.Control
-          as="textarea"
-          name="shippingDetails"
-          value={shippingDetails}
-          onChange={handleChange}
-          placeholder="Same day shipping, we can message to coordinate!"
-        />
-      </Form.Group>
+    isAuthenticated && (
+      <Form onSubmit={handleSubmit}>
+        <Form.Group>
+          <Form.Label>Title</Form.Label>
+          <Form.Control
+            type="text"
+            name="title"
+            value={title}
+            onChange={handleChange}
+            placeholder="iPhone 13, like new!"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Category</Form.Label>
+          <Form.Control
+            type="text"
+            name="category"
+            value={category}
+            onChange={handleChange}
+            placeholder="Electronics"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Condition</Form.Label>
+          <Form.Control
+            type="text"
+            name="condition"
+            value={condition}
+            onChange={handleChange}
+            placeholder="Like New"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Price ($)</Form.Label>
+          <Form.Control
+            type="text"
+            name="price"
+            value={price}
+            onChange={handleChange}
+            placeholder="999"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            name="description"
+            value={description}
+            onChange={handleChange}
+            placeholder="Bought 2 months ago, selling because switching to Android."
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Shipping Details</Form.Label>
+          <Form.Control
+            as="textarea"
+            name="shippingDetails"
+            value={shippingDetails}
+            onChange={handleChange}
+            placeholder="Same day shipping, we can message to coordinate!"
+          />
+        </Form.Group>
 
-      <Button variant="primary" type="submit">
-        List this item
-      </Button>
-    </Form>
+        <Button variant="primary" type="submit">
+          List this item
+        </Button>
+      </Form>
+    )
   );
 };
 
