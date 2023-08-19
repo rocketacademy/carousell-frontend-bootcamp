@@ -1,3 +1,4 @@
+import { Auth0Provider } from "@auth0/auth0-react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -9,6 +10,13 @@ import Listing from "./components/Listing";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
+  <Auth0Provider //Wrapping through the same client
+    domain="dev-b5y4feomkzge4z2c.us.auth0.com"
+    clientId="LvCIjBS6FjmieioSyJlloYxt9CQSp1Ov"
+    redirectUri={window.location.origin}
+    audience="https://carousell/api"
+    scope="read:current_user update:current_user_metadata"
+  >
   <BrowserRouter>
     <Routes>
       {/* Route that provides base app UI */}
@@ -24,4 +32,7 @@ root.render(
       </Route>
     </Routes>
   </BrowserRouter>
+  </Auth0Provider>
 );
+
+console.log(window.location.origin);
