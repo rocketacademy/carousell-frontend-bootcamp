@@ -1,3 +1,4 @@
+import { useAuth0 } from "@auth0/auth0-react";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -9,6 +10,10 @@ import { BACKEND_URL } from "../constants.js";
 const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+
+  //Extract "user" details from here
+  const { isAuthenticated, getAccessTokenSilently, loginWithRedirect, user } =
+    useAuth0();
 
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
@@ -36,10 +41,36 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
+  const handleClick = async () => {
+    // If user is not yet authenticated, authenticate before allowing them to buy
+    if (!isAuthenticated) {
+      loginWithRedirect();
+      return;
+    }
+
+    // Retrieve access token
+    const accessToken = await getAccessTokenSilently({
+      audience: "https://carousell/api",
+      scope: "read:current_user",
     });
+
+    // Mark the listing as bought
+    const response = await axios.put(
+      `${BACKEND_URL}/listings/${listingId}`,
+      // User is currently logged-in user
+      { buyerEmail: user.email,
+        buyerFirstName:user.given_name,
+        buyerLastName: user.family_name,
+        buyerPhone: user.phone_number},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    // Update the listing on the page
+    setListing(response.data);
   };
 
   return (
