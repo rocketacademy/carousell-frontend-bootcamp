@@ -16,6 +16,8 @@ root.render(
     clientId={process.env.REACT_APP_API_CLIENTID}
     authorizationParams={{
       redirect_uri: window.location.origin,
+      audience: process.env.REACT_APP_API_AUDIENCE,
+      // scope: "read:current_user update:current_user_metadata",
     }}
   >
     <BrowserRouter>

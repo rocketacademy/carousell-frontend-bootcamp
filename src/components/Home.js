@@ -19,9 +19,11 @@ const Home = () => {
         </button>
       )}
       <br />
+      <br />
       <Link to="/listings/new">Sell</Link>
       <br />
       <br />
+      Listings
       <ListingPreviewList />
     </div>
   );

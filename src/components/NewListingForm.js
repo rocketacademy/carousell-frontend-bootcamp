@@ -16,12 +16,12 @@ const NewListingForm = () => {
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
 
-  const { loginWithRedirect, isAuthenticated } = useAuth0();
+  const { loginWithRedirect, isAuthenticated, getAccessTokenSilently, user } =
+    useAuth0();
 
   useEffect(() => {
     if (!isAuthenticated) {
       loginWithRedirect();
-      console.log(isAuthenticated);
     }
   });
 
@@ -49,32 +49,45 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (e) => {
     // Prevent default form redirect on submission
-    event.preventDefault();
+    e.preventDefault();
+
+    // Retrieve access token
+    const accessToken = await getAccessTokenSilently({
+      audience: process.env.REACT_APP_API_AUDIENCE,
+      scope: "read:current_user",
+    });
 
     // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
+    const response = await axios.post(
+      `${BACKEND_URL}/listings`,
+      {
         title,
         category,
         condition,
         price,
         description,
         shippingDetails,
-      })
-      .then((res) => {
-        // Clear form state
-        setTitle("");
-        setCategory("");
-        setCondition("");
-        setPrice(0);
-        setDescription("");
-        setShippingDetails("");
+        // User is currently logged-in user
+        email: user.email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    // Clear form state
+    setTitle("");
+    setCategory("");
+    setCondition("");
+    setPrice(0);
+    setDescription("");
+    setShippingDetails("");
 
-        // Navigate to listing-specific page after submitting form
-        navigate(`/listings/${res.data.id}`);
-      });
+    // Navigate to listing-specific page after submitting form
+    navigate(`/listings/${response.data.id}`);
   };
 
   return (
@@ -140,7 +153,6 @@ const NewListingForm = () => {
             placeholder="Same day shipping, we can message to coordinate!"
           />
         </Form.Group>
-
         <Button variant="primary" type="submit">
           List this item
         </Button>
