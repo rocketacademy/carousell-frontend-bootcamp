@@ -1,8 +1,9 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants";
 
@@ -14,6 +15,15 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
+
+  const { loginWithRedirect, isAuthenticated, getAccessTokenSilently, user } =
+    useAuth0();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    }
+  });
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -39,101 +49,115 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (e) => {
     // Prevent default form redirect on submission
-    event.preventDefault();
+    e.preventDefault();
+
+    // Retrieve access token
+    const accessToken = await getAccessTokenSilently({
+      audience: process.env.REACT_APP_API_AUDIENCE,
+      scope: "read:current_user",
+    });
 
     // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
+    const response = await axios.post(
+      `${BACKEND_URL}/listings`,
+      {
         title,
         category,
         condition,
         price,
         description,
         shippingDetails,
-      })
-      .then((res) => {
-        // Clear form state
-        setTitle("");
-        setCategory("");
-        setCondition("");
-        setPrice(0);
-        setDescription("");
-        setShippingDetails("");
+        // User is currently logged-in user
+        email: user.email,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    // Clear form state
+    setTitle("");
+    setCategory("");
+    setCondition("");
+    setPrice(0);
+    setDescription("");
+    setShippingDetails("");
 
-        // Navigate to listing-specific page after submitting form
-        navigate(`/listings/${res.data.id}`);
-      });
+    // Navigate to listing-specific page after submitting form
+    navigate(`/listings/${response.data.id}`);
   };
 
   return (
-    <Form onSubmit={handleSubmit}>
-      <Form.Group>
-        <Form.Label>Title</Form.Label>
-        <Form.Control
-          type="text"
-          name="title"
-          value={title}
-          onChange={handleChange}
-          placeholder="iPhone 13, like new!"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Category</Form.Label>
-        <Form.Control
-          type="text"
-          name="category"
-          value={category}
-          onChange={handleChange}
-          placeholder="Electronics"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Condition</Form.Label>
-        <Form.Control
-          type="text"
-          name="condition"
-          value={condition}
-          onChange={handleChange}
-          placeholder="Like New"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Price ($)</Form.Label>
-        <Form.Control
-          type="text"
-          name="price"
-          value={price}
-          onChange={handleChange}
-          placeholder="999"
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Description</Form.Label>
-        <Form.Control
-          as="textarea"
-          name="description"
-          value={description}
-          onChange={handleChange}
-          placeholder="Bought 2 months ago, selling because switching to Android."
-        />
-      </Form.Group>
-      <Form.Group>
-        <Form.Label>Shipping Details</Form.Label>
-        <Form.Control
-          as="textarea"
-          name="shippingDetails"
-          value={shippingDetails}
-          onChange={handleChange}
-          placeholder="Same day shipping, we can message to coordinate!"
-        />
-      </Form.Group>
-
-      <Button variant="primary" type="submit">
-        List this item
-      </Button>
-    </Form>
+    isAuthenticated && (
+      <Form onSubmit={handleSubmit}>
+        <Form.Group>
+          <Form.Label>Title</Form.Label>
+          <Form.Control
+            type="text"
+            name="title"
+            value={title}
+            onChange={handleChange}
+            placeholder="iPhone 13, like new!"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Category</Form.Label>
+          <Form.Control
+            type="text"
+            name="category"
+            value={category}
+            onChange={handleChange}
+            placeholder="Electronics"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Condition</Form.Label>
+          <Form.Control
+            type="text"
+            name="condition"
+            value={condition}
+            onChange={handleChange}
+            placeholder="Like New"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Price ($)</Form.Label>
+          <Form.Control
+            type="text"
+            name="price"
+            value={price}
+            onChange={handleChange}
+            placeholder="999"
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            name="description"
+            value={description}
+            onChange={handleChange}
+            placeholder="Bought 2 months ago, selling because switching to Android."
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Shipping Details</Form.Label>
+          <Form.Control
+            as="textarea"
+            name="shippingDetails"
+            value={shippingDetails}
+            onChange={handleChange}
+            placeholder="Same day shipping, we can message to coordinate!"
+          />
+        </Form.Group>
+        <Button variant="primary" type="submit">
+          List this item
+        </Button>
+      </Form>
+    )
   );
 };
 
