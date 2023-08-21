@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 import { BACKEND_URL } from "../constants";
 
@@ -132,6 +132,10 @@ const NewListingForm = () => {
 
       <Button variant="primary" type="submit">
         List this item
+      </Button>
+      <br />
+      <Button variant="primary">
+        <Link to="/">Back</Link>
       </Button>
     </Form>
   );
