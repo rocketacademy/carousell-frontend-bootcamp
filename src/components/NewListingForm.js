@@ -1,9 +1,9 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate, Link } from "react-router-dom";
-
+import { useAuth0 } from "@auth0/auth0-react";
 import { BACKEND_URL } from "../constants";
 
 const NewListingForm = () => {
@@ -14,6 +14,15 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
+  const { isAuthenticated, loginWithRedirect } = useAuth0();
+
+  useEffect(() => {
+    // Check if the user is authenticated
+    if (!isAuthenticated) {
+      // If not authenticated, redirect to login
+      loginWithRedirect();
+    }
+  }, [isAuthenticated, loginWithRedirect]);
 
   const handleChange = (event) => {
     switch (event.target.name) {
