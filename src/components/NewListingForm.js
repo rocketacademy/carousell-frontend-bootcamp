@@ -14,7 +14,9 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
-  const { isAuthenticated, loginWithRedirect } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently, loginWithRedirect, user } =
+    useAuth0();
+
 
   useEffect(() => {
     // Check if the user is authenticated
@@ -48,33 +50,57 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async(event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
 
-    // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
-        title,
-        category,
-        condition,
-        price,
-        description,
-        shippingDetails,
-      })
-      .then((res) => {
-        // Clear form state
-        setTitle("");
-        setCategory("");
-        setCondition("");
-        setPrice(0);
-        setDescription("");
-        setShippingDetails("");
-
-        // Navigate to listing-specific page after submitting form
-        navigate(`/listings/${res.data.id}`);
+   
+    
+   
+    try {
+      // Retrieve access token
+      const accessToken = await getAccessTokenSilently({
+        audience: process.env.AUDIENCE,
+        scope: "read:current_user",
       });
+
+      // Send request to create new listing in backend with authorization header
+      const response = await axios.post(
+        `${BACKEND_URL}/listings`,
+        {
+          title,
+          category,
+          condition,
+          price,
+          description,
+          shippingDetails,
+          // User is currently logged-in user
+          sellerEmail: user.email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      // Clear form state
+      setTitle("");
+      setCategory("");
+      setCondition("");
+      setPrice("");
+      setDescription("");
+      setShippingDetails("");
+
+      // Navigate to listing-specific page after submitting form
+      navigate(`/listings/${response.data.id}`);
+    } catch (error) {
+      // Handle error here
+      console.error("Error creating listing:", error);
+    }
+  
   };
+  
 
   return (
     <Form onSubmit={handleSubmit}>

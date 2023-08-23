@@ -14,6 +14,8 @@ root.render(
   <Auth0Provider
     domain={process.env.ISSUER_BASE_DOMAIN}
     clientId={process.env.CLIENT_ID}
+    audience={process.env.AUDIENCE}
+    scope="read:current_user update:current_user_metadata"
     authorizationParams={{
       redirect_uri: window.location.origin,
     }}
