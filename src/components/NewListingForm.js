@@ -60,7 +60,7 @@ const NewListingForm = () => {
     try {
       // Retrieve access token
       const accessToken = await getAccessTokenSilently({
-        audience: process.env.AUDIENCE,
+        audience: process.env.REACT_APP_AUDIENCE,
         scope: "read:current_user",
       });
 

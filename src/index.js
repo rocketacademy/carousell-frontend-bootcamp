@@ -9,18 +9,20 @@ import Listing from "./components/Listing";
 import { Auth0Provider } from "@auth0/auth0-react";
 
 
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <Auth0Provider
-    domain={process.env.ISSUER_BASE_DOMAIN}
-    clientId={process.env.CLIENT_ID}
-    audience={process.env.AUDIENCE}
+    domain={process.env.REACT_APP_ISSUER_BASE_DOMAIN}
+    clientId={process.env.REACT_APP_CLIENT_ID}
+    audience={process.env.REACT_APP_AUDIENCE}
     scope="read:current_user update:current_user_metadata"
     authorizationParams={{
       redirect_uri: window.location.origin,
     }}
   >
     <BrowserRouter>
+    
       <Routes>
         {/* Route that provides base app UI */}
         <Route path="/" element={<App />}>
