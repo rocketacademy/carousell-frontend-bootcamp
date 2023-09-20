@@ -44,28 +44,37 @@ const Listing = () => {
       loginWithRedirect();
       return;
     }
-
-    // Retrieve access token
-    const accessToken = await getAccessTokenSilently({
-      audience: process.env.AUDIENCE,
-      scope: "read:current_user",
-    });
-
-    // Mark the listing as bought
-    const response = await axios.put(
-      `${BACKEND_URL}/listings/${listingId}/buy`,
-      // User is currently logged-in user
-      { buyerEmail: user.email },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    // Update the listing on the page
-    setListing(response.data);
+    console.log("Audience:", process.env.REACT_APP_AUDIENCE);
+    try {
+      // Retrieve access token
+      const accessToken = await getAccessTokenSilently({
+        audience: process.env.REACT_APP_AUDIENCE,
+        scope: "read:current_user",
+      });
+  
+      // Log the access token to the console for verification
+      console.log("Access Token:", accessToken);
+  
+      // Mark the listing as bought
+      const response = await axios.put(
+        `${BACKEND_URL}/listings/${listingId}/buy`,
+        // User is currently logged-in user
+        { buyerEmail: user.email },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+  
+      // Update the listing on the page
+      setListing(response.data);
+    } catch (error) {
+      console.error("Error obtaining access token:", error.message);
+      // Handle the error (e.g., show an error message to the user)
+    }
   };
+  
 
   return (
     <div>
@@ -74,6 +83,7 @@ const Listing = () => {
         <Card.Body>
           {listingDetails}
           <Button onClick={handleClick} disabled={listing.BuyerId}>
+            
             Buy
           </Button>
         </Card.Body>
