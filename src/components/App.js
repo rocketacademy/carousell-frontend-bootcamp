@@ -18,7 +18,7 @@ export default function App() {
       <p>{"\n\n"}</p>
     
       <Button onClick={()=>loginWithRedirect()}>Log in</Button>
-      <Button onClick={() => logout({ returnTo: window.location.origin })}>
+      <Button onClick={() => logout({ returnTo: "https://huangyh988.github.io/carousell-frontend-bootcamp/ "})}>
             Log Out
           </Button>
     </header>

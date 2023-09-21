@@ -17,7 +17,8 @@ root.render(
     clientId={process.env.REACT_APP_CLIENT_ID}    
     scope="read:current_user update:current_user_metadata"
     authorizationParams={{
-      redirect_uri: window.location.origin,
+      //redirect_uri: window.location.origin,
+      redirect_uri:"https://huangyh988.github.io/carousell-frontend-bootcamp/",
       audience:process.env.REACT_APP_AUDIENCE,
       
     }}
