@@ -15,10 +15,12 @@ root.render(
   <Auth0Provider
     domain={process.env.REACT_APP_ISSUER_BASE_DOMAIN}
     clientId={process.env.REACT_APP_CLIENT_ID}
-    audience={process.env.REACT_APP_AUDIENCE}
+    
     scope="read:current_user update:current_user_metadata"
     authorizationParams={{
       redirect_uri: window.location.origin,
+      audience:process.env.REACT_APP_AUDIENCE,
+      
     }}
   >
     <BrowserRouter>

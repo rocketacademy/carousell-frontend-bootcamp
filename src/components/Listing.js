@@ -9,6 +9,7 @@ import { BACKEND_URL } from "../constants.js";
 const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+
   const { isAuthenticated, getAccessTokenSilently, loginWithRedirect, user } =
     useAuth0();
 
@@ -44,17 +45,14 @@ const Listing = () => {
       loginWithRedirect();
       return;
     }
-    console.log("Audience:", process.env.REACT_APP_AUDIENCE);
+console.log(user)
     try {
       // Retrieve access token
       const accessToken = await getAccessTokenSilently({
         audience: process.env.REACT_APP_AUDIENCE,
         scope: "read:current_user",
       });
-  
-      // Log the access token to the console for verification
-      console.log("Access Token:", accessToken);
-  
+
       // Mark the listing as bought
       const response = await axios.put(
         `${BACKEND_URL}/listings/${listingId}/buy`,
@@ -66,7 +64,7 @@ const Listing = () => {
           },
         }
       );
-  
+
       // Update the listing on the page
       setListing(response.data);
     } catch (error) {
@@ -74,7 +72,38 @@ const Listing = () => {
       // Handle the error (e.g., show an error message to the user)
     }
   };
-  
+  const handleClick2 = async () => {
+    try {
+      // Retrieve access token
+      const accessToken = await getAccessTokenSilently({
+        audience: process.env.REACT_APP_AUDIENCE,
+        scope: "read:current_user",
+      });
+
+      // Mark the listing as bought
+      const response = await axios.delete(
+        `${BACKEND_URL}/listings/${listingId}/buy`,
+        {
+          data: { buyerEmail: user.email }, // Use "data" instead of passing in the body directly
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+     
+        window.alert("Buy request canceled successfully!");
+        setListing(response.data);
+        // Show an error alert
+       
+      
+    } catch (error) {
+      if (error.response.status===403){
+        window.alert("You cannot cancel buy request as you are not the buyer.");
+      }
+      console.error("Error obtaining access token:", error.message);
+    }
+  };
 
   return (
     <div>
@@ -82,10 +111,12 @@ const Listing = () => {
       <Card bg="dark">
         <Card.Body>
           {listingDetails}
-          <Button onClick={handleClick} disabled={listing.BuyerId}>
-            
+          <Button onClick={handleClick} disabled={listing.buyerId}>
             Buy
           </Button>
+          <Button onClick={handleClick2}>Cancel Buy Request</Button>
+          <br />
+          
         </Card.Body>
       </Card>
       <br />
