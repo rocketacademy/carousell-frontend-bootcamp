@@ -14,8 +14,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <Auth0Provider
     domain={process.env.REACT_APP_ISSUER_BASE_DOMAIN}
-    clientId={process.env.REACT_APP_CLIENT_ID}
-    
+    clientId={process.env.REACT_APP_CLIENT_ID}    
     scope="read:current_user update:current_user_metadata"
     authorizationParams={{
       redirect_uri: window.location.origin,
