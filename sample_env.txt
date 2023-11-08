@@ -1,0 +1,5 @@
+ISSUER_BASE_DOMAIN="dev-3xmr2paxq2bxqrez.auth0.com"
+AUDIENCE="https://carousell/api"
+CLIENT_ID="AVrfpRWcxoMPpYdU3noHeTqppqZiOcvY"
+
+delete after git pull

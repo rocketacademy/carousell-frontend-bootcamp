@@ -3,12 +3,15 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
-
+import { useAuth0 } from "@auth0/auth0-react";
 import { BACKEND_URL } from "../constants.js";
 
 const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+
+  const { isAuthenticated, getAccessTokenSilently, loginWithRedirect, user } =
+    useAuth0();
 
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
@@ -36,10 +39,70 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
+  const handleClick = async () => {
+    // If user is not yet authenticated, authenticate before allowing them to buy
+    if (!isAuthenticated) {
+      loginWithRedirect();
+      return;
+    }
+console.log(user)
+    try {
+      // Retrieve access token
+      const accessToken = await getAccessTokenSilently({
+        audience: process.env.REACT_APP_AUDIENCE,
+        scope: "read:current_user",
+      });
+
+      // Mark the listing as bought
+      const response = await axios.put(
+        `${BACKEND_URL}/listings/${listingId}/buy`,
+        // User is currently logged-in user
+        { buyerEmail: user.email },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      // Update the listing on the page
       setListing(response.data);
-    });
+    } catch (error) {
+      console.error("Error obtaining access token:", error.message);
+      // Handle the error (e.g., show an error message to the user)
+    }
+  };
+  const handleClick2 = async () => {
+    try {
+      // Retrieve access token
+      const accessToken = await getAccessTokenSilently({
+        audience: process.env.REACT_APP_AUDIENCE,
+        scope: "read:current_user",
+      });
+
+      // Mark the listing as bought
+      const response = await axios.delete(
+        `${BACKEND_URL}/listings/${listingId}/buy`,
+        {
+          data: { buyerEmail: user.email }, // Use "data" instead of passing in the body directly
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+     
+        window.alert("Buy request canceled successfully!");
+        setListing(response.data);
+        // Show an error alert
+       
+      
+    } catch (error) {
+      if (error.response.status===403){
+        window.alert("You cannot cancel buy request as you are not the buyer.");
+      }
+      console.error("Error obtaining access token:", error.message);
+    }
   };
 
   return (
@@ -48,9 +111,12 @@ const Listing = () => {
       <Card bg="dark">
         <Card.Body>
           {listingDetails}
-          <Button onClick={handleClick} disabled={listing.BuyerId}>
+          <Button onClick={handleClick} disabled={listing.buyerId}>
             Buy
           </Button>
+          <Button onClick={handleClick2}>Cancel Buy Request</Button>
+          <br />
+          
         </Card.Body>
       </Card>
       <br />
