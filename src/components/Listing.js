@@ -3,10 +3,12 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants.js";
 
 const Listing = () => {
+  const { user, loginWithRedirect, isAuthenticated } = useAuth0();
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
 
@@ -37,9 +39,14 @@ const Listing = () => {
   }
 
   const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
-    });
+    if (!isAuthenticated) {
+      return loginWithRedirect();
+    }
+    axios
+      .put(`${BACKEND_URL}/listings/${listingId}`, { email: user.email })
+      .then((response) => {
+        setListing(response.data);
+      });
   };
 
   return (

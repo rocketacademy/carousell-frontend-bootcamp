@@ -1,8 +1,9 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants";
 
@@ -14,8 +15,15 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
+  const { user, loginWithRedirect, isAuthenticated } = useAuth0();
 
-  const handleChange = (event) => {
+  useEffect(() => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    }
+  });
+
+  const handleChange = async (event) => {
     switch (event.target.name) {
       case "title":
         setTitle(event.target.value);
@@ -52,6 +60,7 @@ const NewListingForm = () => {
         price,
         description,
         shippingDetails,
+        sellerEmail: user.email,
       })
       .then((res) => {
         // Clear form state
