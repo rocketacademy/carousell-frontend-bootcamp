@@ -15,7 +15,8 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
-  const { user, loginWithRedirect, isAuthenticated } = useAuth0();
+  const { user, loginWithRedirect, isAuthenticated, getAccessTokenSilently } =
+    useAuth0();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -47,13 +48,20 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
 
+    const token = await getAccessTokenSilently({
+      authorizationParams: {
+        audience: process.env.REACT_APP_AUDIENCE,
+        scope: "read:current_user",
+      },
+    });
     // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
+    const res = await axios.post(
+      `${BACKEND_URL}/listings`,
+      {
         title,
         category,
         condition,
@@ -61,19 +69,22 @@ const NewListingForm = () => {
         description,
         shippingDetails,
         sellerEmail: user.email,
-      })
-      .then((res) => {
-        // Clear form state
-        setTitle("");
-        setCategory("");
-        setCondition("");
-        setPrice(0);
-        setDescription("");
-        setShippingDetails("");
-
-        // Navigate to listing-specific page after submitting form
-        navigate(`/listings/${res.data.id}`);
-      });
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    // Clear form state
+    setTitle("");
+    setCategory("");
+    setCondition("");
+    setPrice(0);
+    setDescription("");
+    setShippingDetails("");
+    // Navigate to listing-specific page after submitting form
+    navigate(`/listings/${res.data.id}`);
   };
 
   return (

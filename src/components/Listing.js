@@ -8,7 +8,8 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { BACKEND_URL } from "../constants.js";
 
 const Listing = () => {
-  const { user, loginWithRedirect, isAuthenticated } = useAuth0();
+  const { user, loginWithRedirect, isAuthenticated, getAccessTokenSilently } =
+    useAuth0();
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
 
@@ -38,15 +39,27 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (!isAuthenticated) {
       return loginWithRedirect();
     }
-    axios
-      .put(`${BACKEND_URL}/listings/${listingId}`, { email: user.email })
-      .then((response) => {
-        setListing(response.data);
-      });
+
+    const token = await getAccessTokenSilently({
+      authorizationParams: {
+        audience: process.env.REACT_APP_AUDIENCE,
+        scope: "read:current_user",
+      },
+    });
+    const res = await axios.put(
+      `${BACKEND_URL}/listings/${listingId}`,
+      { email: user.email },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    setListing(res.data);
   };
 
   return (
