@@ -1,9 +1,9 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
-
+import { useAuth0 } from "@auth0/auth0-react";
 import { BACKEND_URL } from "../constants";
 
 const NewListingForm = () => {
@@ -13,7 +13,27 @@ const NewListingForm = () => {
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
+  const [token, setToken] = useState("");
   const navigate = useNavigate();
+  const { user, isAuthenticated, getAccessTokenSilently, loginWithRedirect } =
+    useAuth0();
+
+  const checkUser = async () => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    } else {
+      const accessToken = await getAccessTokenSilently({
+        audience: process.env.REACT_APP_AUDIENCE,
+        scope:
+          "read:current_user update:current_user_metadata openid profile email",
+      });
+      console.log(accessToken);
+      setToken(accessToken);
+    }
+  };
+  useEffect(() => {
+    checkUser();
+  }, []);
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -39,33 +59,44 @@ const NewListingForm = () => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
+    try {
+      const res = await axios.post(
+        `${BACKEND_URL}/listings`,
+        {
+          title,
+          category,
+          condition,
+          price,
+          description,
+          shippingDetails,
+          sellerEmail: user.email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    // Send request to create new listing in backend
-    axios
-      .post(`${BACKEND_URL}/listings`, {
-        title,
-        category,
-        condition,
-        price,
-        description,
-        shippingDetails,
-      })
-      .then((res) => {
-        // Clear form state
-        setTitle("");
-        setCategory("");
-        setCondition("");
-        setPrice(0);
-        setDescription("");
-        setShippingDetails("");
+      setTitle("");
+      setCategory("");
+      setCondition("");
+      setPrice(0);
+      setDescription("");
+      setShippingDetails("");
 
-        // Navigate to listing-specific page after submitting form
-        navigate(`/listings/${res.data.id}`);
-      });
+      // Navigate to listing-specific page after submitting form
+      navigate(`/listings/${res.data.id}`);
+    } catch (error) {
+      // Handle the error here
+      console.error("Error submitting form:", error.message, error.code);
+    }
   };
+
+  // Send request to create new listing in backend
 
   return (
     <Form onSubmit={handleSubmit}>
