@@ -43,11 +43,11 @@ const Listing = () => {
       loginWithRedirect();
     }
     const accessToken = await getAccessTokenSilently({
-      audience: process.env.REACT_APP_AUDIENCE,
+      audience: process.env.REACT_APP_AUTH0_AUDIENCE,
       scope:
         "read:current_user update:current_user_metadata openid profile email",
     });
-    console.log(accessToken);
+
     try {
       const res = await axios.put(
         `${BACKEND_URL}/listings/${listingId}`,
