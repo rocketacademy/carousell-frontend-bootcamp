@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -12,6 +12,7 @@ const Listing = () => {
   const [listing, setListing] = useState({});
   const { user, isAuthenticated, loginWithRedirect, getAccessTokenSilently } =
     useAuth0();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -55,7 +56,7 @@ const Listing = () => {
       .put(
         `${BACKEND_URL}/listings/${listingId}`,
         {
-          sellerEmail: user.email,
+          buyerEmail: user.email,
         },
         {
           headers: {
@@ -65,6 +66,9 @@ const Listing = () => {
       )
       .then((response) => {
         setListing(response.data);
+        if (accessToken) {
+          navigate(`/listings/${response.data.id}`);
+        }
       });
   };
 
