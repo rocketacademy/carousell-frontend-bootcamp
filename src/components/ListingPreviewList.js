@@ -4,8 +4,10 @@ import { Link } from "react-router-dom";
 
 import ListingPreview from "./ListingPreview";
 import { BACKEND_URL } from "../constants.js";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const ListingPreviewList = () => {
+  const { logout } = useAuth0();
   const [listings, setListings] = useState([]);
 
   useEffect(() => {
@@ -21,7 +23,18 @@ const ListingPreviewList = () => {
     </Link>
   ));
 
-  return <div>{listingPreviews}</div>;
+  return (
+    <div>
+      {listingPreviews}
+      <button
+        onClick={() =>
+          logout({ logoutParams: { returnTo: window.location.origin } })
+        }
+      >
+        Log Out
+      </button>
+    </div>
+  );
 };
 
 export default ListingPreviewList;
