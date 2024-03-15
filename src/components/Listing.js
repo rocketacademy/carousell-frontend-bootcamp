@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants.js";
 
@@ -10,6 +11,12 @@ const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
 
+  const { user, isAuthenticated, loginWithRedirect, getAccessTokenSilently } =
+    useAuth0();
+
+  console.log(user);
+  console.log(isAuthenticated);
+  console.log(useAuth0());
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
     if (listingId) {
@@ -26,6 +33,7 @@ const Listing = () => {
     setListingId(params.listingId);
   }
 
+  console.log(listingId);
   // Store a new JSX element for each property in listing details
   const listingDetails = [];
   if (listing) {
@@ -36,10 +44,33 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
-      setListing(response.data);
+  const handleClick = async () => {
+    if (!isAuthenticated) {
+      loginWithRedirect();
+    }
+
+    const accessToken = await getAccessTokenSilently({
+      audience: process.env.REACT_APP_API_AUDIENCE,
+      scope: "read:current_user openid profile email ",
     });
+
+    console.log(accessToken);
+
+    axios
+      .put(
+        `${BACKEND_URL}/listings/${listingId}`,
+        {
+          email: user.email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      )
+      .then((response) => {
+        setListing(response.data);
+      });
   };
 
   return (
@@ -48,7 +79,7 @@ const Listing = () => {
       <Card bg="dark">
         <Card.Body>
           {listingDetails}
-          <Button onClick={handleClick} disabled={listing.BuyerId}>
+          <Button onClick={handleClick} disabled={listing.buyerId}>
             Buy
           </Button>
         </Card.Body>
