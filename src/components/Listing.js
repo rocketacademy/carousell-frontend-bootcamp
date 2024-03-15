@@ -50,7 +50,7 @@ const Listing = () => {
     }
 
     const accessToken = await getAccessTokenSilently({
-      audience: "https://carousell/api",
+      audience: process.env.REACT_APP_API_AUDIENCE,
       scope: "read:current_user openid profile email ",
     });
 
