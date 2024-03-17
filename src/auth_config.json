@@ -1,0 +1,6 @@
+{
+  "domain": "dev-0j576ai40olqn5i0.uk.auth0.com",
+  "clientId": "Pz4h8gWnn4mWnvoGOlqWVfQz2xzyb1ly",
+  "audience": "https://carousell/api",
+  "scope": "read:current_user update:current_user_metadata read:testperm1 read:testperm2"
+}
