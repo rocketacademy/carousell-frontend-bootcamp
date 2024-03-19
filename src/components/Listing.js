@@ -3,12 +3,15 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { BACKEND_URL } from "../constants.js";
 
 const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
+  const { user, isAuthenticated, loginWithRedirect, getAccessTokenSilently } =
+    useAuth0();
 
   useEffect(() => {
     // If there is a listingId, retrieve the listing data
@@ -36,10 +39,32 @@ const Listing = () => {
     }
   }
 
-  const handleClick = () => {
-    axios.put(`${BACKEND_URL}/listings/${listingId}`).then((response) => {
+  useEffect(() => {
+    !isAuthenticated && loginWithRedirect();
+  }, []);
+
+  const handleClick = async () => {
+    try {
+      const accessToken = await getAccessTokenSilently({
+        audience: "https://carousell/api",
+        scope: "read:current_user",
+      });
+
+      const response = await axios.put(
+        `${BACKEND_URL}/listings/${listingId}`,
+        {
+          buyerEmail: user.email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
       setListing(response.data);
-    });
+    } catch (error) {
+      console.error("Error buying listing:", error);
+    }
   };
 
   return (
